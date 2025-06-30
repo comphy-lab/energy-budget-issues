@@ -159,7 +159,7 @@ int main(int a, char const *arguments[])
   foreach() {
     // Compute deformation rate tensor components
     double D11 = (u.y[0,1] - u.y[0,-1])/(2*Delta);
-    double D22 = (u.y[]/y);
+    double D22 = (u.y[]/max(y,1e-20));
     double D33 = (u.x[1,0] - u.x[-1,0])/(2*Delta);
     double D13 = 0.5*( (u.y[1,0] - u.y[-1,0] + u.x[0,1] - u.x[0,-1])/(2*Delta) );
 
