@@ -71,6 +71,12 @@ To run this simulation: `make 3-DropImpactOnPool.tst`
 #include "tension.h"                  // Surface tension forces
 #include "reduced.h"                  // Reduced gravity formulation
 
+// System headers for safe directory creation
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <errno.h>
+#include <string.h>
+
 // ======= Numerical parameters =======
 #define tsnap (0.0025)                // Time interval for output snapshots
 
@@ -118,9 +124,12 @@ int main(int argc, char const *argv[]) {
   fprintf(ferr, "Level %d, tmax %f, Fr %f, Ga %g, Bo %g\n", MAXlevel, tmax, Fr, Ga, Bo);
 
   // Create directory for intermediate results
-  char comm[80];
-  sprintf(comm, "mkdir -p intermediate");
-  system(comm);
+  struct stat st = {0};
+  if (stat("intermediate", &st) == -1) {
+    if (mkdir("intermediate", 0700) != 0) {
+      fprintf(ferr, "Error creating intermediate directory: %s\n", strerror(errno));
+    }
+  }
 
   // Set physical properties (dimensionless)
   rho1 = 1.0;                         // Liquid density (reference value)

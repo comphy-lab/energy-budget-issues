@@ -44,11 +44,7 @@ cd simulationCases
 ### Core Components
 
 1. **Custom Physics Headers** (`src-local/`):
-   - `two-phase-thermal.h`: Thermal effects in two-phase flows
-   - `two-phaseVE.h`: Viscoelastic two-phase flows  
-   - `log-conform-viscoelastic.h`: Log-conformation method for viscoelastic fluids
-   - `convection-Boussinesq.h`: Boussinesq approximation for natural convection
-   - `three-phase.h`: Three-phase flow capabilities
+   - none so far
 
 2. **Simulation Structure**:
    - Each simulation is a standalone C file that includes relevant Basilisk headers

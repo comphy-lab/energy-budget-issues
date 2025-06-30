@@ -9,7 +9,6 @@
  * Physical parameters:
  * - Weber number (We): Inertial vs surface tension forces
  * - Ohnesorge numbers (Ohd, Ohs): Viscous vs inertial and surface tension forces
- * - Bond number (Bo): Gravitational vs surface tension forces
  * 
  * @author Vatsal Sanjay (vatsalsy@comphy-lab.org)
  * https://comphy-lab.org
@@ -22,11 +21,16 @@
 // ======= Include necessary Basilisk modules =======
 #include "axi.h"                // Axisymmetric coordinates
 #include "navier-stokes/centered.h"  // NS solver with centered discretization
-#define FILTERED                // Use filtered VOF advection
+#define FILTERED 1               // Use filtered VOF advection
 #include "two-phase.h"          // Two-phase interface tracking
 #include "navier-stokes/conserving.h"  // Conservative momentum advection
 #include "tension.h"            // Surface tension model
-#include "reduced.h"            // Reduced gravity approach
+
+// System headers for safe directory creation
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <errno.h>
+#include <string.h>
 
 // ======= Numerical parameters for adaptivity =======
 // Error tolerances for adaptive mesh refinement
@@ -38,46 +42,47 @@
 // ======= Physical parameters =======
 #define Rho21 (1e-3)            // Density ratio (air/water)
 // Drop positioning parameters
-#define SPdist (0.02)           // Distance parameter for drop placement
+#define SPdist (0.01)           // Distance parameter for drop placement
 #define R2Drop(x,y) (sq(x - 1e0 - SPdist) + sq(y))  // Function to define circular drop shape
 
 // ======= Boundary conditions =======
 // Left boundary: solid wall (no-slip and no flux)
-u.t[left] = dirichlet(0.0);     // Tangential velocity = 0 (no-slip)
+// u.t[left] = dirichlet(0.0);     // Tangential velocity = 0 (no-slip)
 f[left] = dirichlet(0.0);       // Volume fraction = 0 (solid wall)
 
 // Right boundary: outflow condition
-u.n[right] = neumann(0.);       // Zero gradient for normal velocity
-p[right] = dirichlet(0.0);      // Reference pressure = 0
+// u.n[right] = neumann(0.0);       // Zero gradient for normal velocity
+// p[right] = dirichlet(0.0);      // Reference pressure = 0
 
 // Top boundary: outflow condition
-u.n[top] = neumann(0.);         // Zero gradient for normal velocity
-p[top] = dirichlet(0.0);        // Reference pressure = 0
+// u.n[top] = neumann(0.0);         // Zero gradient for normal velocity
+// p[top] = dirichlet(0.0);        // Reference pressure = 0
 
 // ======= Global parameters =======
 int MAXlevel;                   // Maximum refinement level
-double tmax, We, Ohd, Ohs, Bo, Ldomain;
-#define MINlevel 2              // Minimum refinement level
+double tmax, We, Ohd, Ohs, Ldomain, Etot, EDiss;
 #define tsnap (0.01)            // Time interval for snapshot outputs
+#define tsnap_energy (0.001)      // Time interval for energy calculation
+
+char energyFile[80];
 
 int main(int argc, char const *argv[]) {
 
   // Default parameter values
-  MAXlevel = 8;                 // Maximum grid refinement level
-  tmax = 2.0;                   // Maximum simulation time
-  We = 1.0;                     // Weber number (We = ρU²D/σ)
-  Ohd = 1e-2;                   // Ohnesorge number for drop (Oh = μ/√(ρσD))
-  Ohs = 1e-4;                   // Ohnesorge number for surrounding fluid
-  Bo = 0.5;                     // Bond number (Bo = ρgD²/σ)
+  MAXlevel = 10;                 // Maximum grid refinement level
+  tmax = 5.0;                   // Maximum simulation time
+  We = 4.0;                     // Weber number (We = ρU²D/σ)
+  Ohd = 5e-2;                   // Ohnesorge number for drop (Oh = μ/√(ρσD))
+  Ohs = 1e-5; //1e-4*Ohd;                   // Ohnesorge number for surrounding fluid
   Ldomain = 4.0;                // Domain size (dimensionless)
 
   /**
    * Parameter input from command line
    * Uncomment the following to pass the arguments from the command line:
-   * ./executable MAXlevel tmax We Ohd Ohs Bo Ldomain
+   * ./executable MAXlevel tmax We Ohd Ohs Ldomain
    */
-  // if (argc < 8){
-  //   fprintf(ferr, "Lack of command line arguments. Check! Need %d more arguments\n",8-argc);
+  // if (argc < 7){
+  //   fprintf(ferr, "Lack of command line arguments. Check! Need %d more arguments\n",7-argc);
   //   return 1;
   // }
   // MAXlevel = atoi(argv[1]);
@@ -85,12 +90,11 @@ int main(int argc, char const *argv[]) {
   // We = atof(argv[3]); // We is 1 for 0.22 m/s <1250*0.22^2*0.001/0.06>
   // Ohd = atof(argv[4]); // <\mu/sqrt(1250*0.060*0.001)>
   // Ohs = atof(argv[5]); //\mu_r * Ohd
-  // Bo = atof(argv[6]);
-  // Ldomain = atof(argv[7]); // size of domain. must keep Ldomain \gg 1
+  // Ldomain = atof(argv[6]); // size of domain. must keep Ldomain \gg 1
 
   // Log the simulation parameters
-  fprintf(ferr, "Level %d tmax %g. We %g, Ohd %3.2e, Ohs %3.2e, Bo %g, Lo %g\n", 
-          MAXlevel, tmax, We, Ohd, Ohs, Bo, Ldomain);
+  fprintf(ferr, "Level %d tmax %g. We %g, Ohd %3.2e, Ohs %3.2e, Lo %g\n", 
+          MAXlevel, tmax, We, Ohd, Ohs, Ldomain);
 
   // ======= Set up the computational domain =======
   L0 = Ldomain;                 // Domain size
@@ -98,9 +102,12 @@ int main(int argc, char const *argv[]) {
   init_grid(1 << (4));          // Start with a 16×16 base grid (2^4)
 
   // Create directory for intermediate results
-  char comm[80];
-  sprintf(comm, "mkdir -p intermediate");
-  system(comm);
+  struct stat st = {0};
+  if (stat("intermediate", &st) == -1) {
+    if (mkdir("intermediate", 0700) != 0) {
+      fprintf(ferr, "Error creating intermediate directory: %s\n", strerror(errno));
+    }
+  }
 
   // ======= Set physical properties =======
   // Note: All quantities are in dimensionless form
@@ -109,7 +116,8 @@ int main(int argc, char const *argv[]) {
   rho2 = Rho21;                 // Density of surrounding fluid
   mu2 = Ohs/sqrt(We);           // Viscosity of surrounding fluid
   f.sigma = 1.0/We;             // Surface tension coefficient derived from We
-  G.x = -Bo/We;                 // Gravity in x-direction (from Bond number)
+
+  sprintf(energyFile, "energy.dat");
 
   run();
 }
@@ -129,6 +137,7 @@ event init(t = 0){
       u.x[] = -1.0*f[];  // Initial velocity in x-direction (toward wall)
                          // Only the drop has initial velocity
       u.y[] = 0.0;       // No initial velocity in y-direction
+      p[] = f[]*2*f.sigma;
     }
   }
 
@@ -138,14 +147,25 @@ event init(t = 0){
   // return 1;
 }
 
-// ======= Adaptive mesh refinement =======
-scalar KAPPA[], D2c[];  // Curvature field and dissipation field
-event adapt(i++){
-  // Calculate curvature for interface refinement
-  curvature(f, KAPPA);
-  
+trace
+double interface_energy (scalar c){
+  double se = 0.;
+  foreach (reduction(+:se)){
+    if (c[] > 1e-6 && c[] < 1. - 1e-6) {
+      coord p, n = interface_normal (point, c);
+      double alpha = plane_alpha (c[], n);
+      double len = line_length_center(n, alpha, &p);
+      se += 2.*pi*( y + p.y*Delta )*(len*Delta); // 2*pi*\int_l (r_c)dl
+    }
+  }
+  return se;
+}
+
+scalar D2c[];  // Dissipation rate field
+event energyCalculation(t = 2*tsnap_energy; t += tsnap_energy; t <= tmax){
+  double ke = 0., se = 0., eps = 0.;
   // Calculate local dissipation rate as refinement criteria
-  foreach(){
+  foreach(reduction(+:ke) reduction(+:eps)){
     // Calculate velocity gradient components in cylindrical coordinates
     double D11 = (u.y[0,1] - u.y[0,-1])/(2*Delta);  // ∂u_y/∂y
     double D22 = (u.y[]/max(y,1e-20));              // u_y/y (azimuthal strain rate)
@@ -154,9 +174,34 @@ event adapt(i++){
     
     // Calculate dissipation rate (sum of squares of strain rates)
     double D2 = (sq(D11)+sq(D22)+sq(D33)+2.0*sq(D13));
-    D2c[] = f[]*D2;  // Dissipation rate in the drop phase
+    D2c[] = 2*mu(f[])*D2;  // Dissipation rate in the drop phase
+    eps += 2*pi*y*D2c[]*sq(Delta);
+    ke += pi*y*rho(f[])*(sq(u.x[]) + sq(u.y[]))*sq(Delta);
   }
+  se = (interface_energy (f) - 4*pi)*f.sigma;
+  EDiss += eps*tsnap_energy;
+  Etot = ke + se + EDiss;
+
+  static FILE *fp = NULL;
   
+  if (t == 2*tsnap_energy){
+    fp = fopen(energyFile, "w");
+    fprintf(fp, "i t ke se eps EDiss Etot\n");
+    fprintf(fp, "%d %g %g %g %g %g %g\n", i, t, ke, se, eps, EDiss, Etot);
+    fclose(fp);
+  } else {
+    fp = fopen(energyFile, "a");
+    fprintf(fp, "%d %g %g %g %g %g %g\n", i, t, ke, se, eps, EDiss, Etot);
+    fclose(fp);
+  }
+
+}
+
+// ======= Adaptive mesh refinement =======
+scalar KAPPA[];  // Curvature field and dissipation field
+event adapt(i++){
+  // Calculate curvature for interface refinement
+  curvature(f, KAPPA);
   // Adapt mesh based on multiple criteria:
   // - Interface position (f)
   // - Interface curvature (KAPPA)
@@ -164,7 +209,7 @@ event adapt(i++){
   // - Dissipation rate (D2c)
   adapt_wavelet((scalar *){f, KAPPA, u.x, u.y, D2c},
                (double[]){fErr, KErr, VelErr, VelErr, DissErr},
-               MAXlevel, MINlevel);
+               MAXlevel, MAXlevel-4);
   
   // Prevent unnecessary refinement near outflow boundary
   // This helps reduce computational cost
@@ -183,7 +228,7 @@ event writingFiles(t = 0, t += tsnap; t <= tmax) {
 }
 
 // ======= Log simulation data =======
-event logWriting(i += 10) {
+event logWriting(t = 0; t += tsnap_energy; t <= tmax) {
   // Calculate kinetic energy of the system
   // For axisymmetric simulations, we integrate 2πy(...) to account for volume element
   double ke = 0.;
@@ -196,19 +241,19 @@ event logWriting(i += 10) {
   if (pid() == 0){  // Execute only on main process for parallel runs
     if (i == 0) {
       // Initialize log file with header
-      fprintf(ferr, "i dt t ke p\n");
+      fprintf(ferr, "i dt t ke Etot Etot_error\n");
       fp = fopen("log", "w");
-      fprintf(fp, "Level %d tmax %g. We %g, Ohd %3.2e, Ohs %3.2e, Bo %g\n", 
-              MAXlevel, tmax, We, Ohd, Ohs, Bo);
-      fprintf(fp, "i dt t ke\n");
-      fprintf(fp, "%d %g %g %g\n", i, dt, t, ke);
+      fprintf(fp, "Level %d tmax %g. We %g, Ohd %3.2e, Ohs %3.2e, Lo %g\n", 
+              MAXlevel, tmax, We, Ohd, Ohs, Ldomain);
+      fprintf(fp, "i dt t ke Etot\n");
+      fprintf(fp, "%d %g %g %g %g\n", i, dt, t, ke, Etot);
       fclose(fp);
     } else {
       // Append data to log file
       fp = fopen("log", "a");
-      fprintf(fp, "%d %g %g %g\n", i, dt, t, ke);
+      fprintf(fp, "%d %g %g %g %g\n", i, dt, t, ke, Etot);
       fclose(fp);
     }
-    fprintf(ferr, "%d %g %g %g\n", i, dt, t, ke);
+    fprintf(ferr, "%d %g %g %g %g\n", i, dt, t, ke, Etot);
   }
 }

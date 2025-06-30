@@ -1,46 +1,40 @@
-# Basilisk-101: High-Fidelity Simulations Using Basilisk C
+# Energy Budget Issues: High-Fidelity Simulations Using Basilisk C
 
-[![Issues](https://img.shields.io/github/issues/comphy-lab/Basilisk-101)](https://github.com/comphy-lab/Basilisk-101/issues)
-[![License](https://img.shields.io/github/license/comphy-lab/Basilisk-101)](https://github.com/comphy-lab/Basilisk-101/blob/main/LICENSE)
-[![Last Commit](https://img.shields.io/github/last-commit/comphy-lab/Basilisk-101)](https://github.com/comphy-lab/Basilisk-101/commits/main)
-[![Course](https://img.shields.io/badge/Course-March%202025-blue)](https://comphy-lab.org/teaching/2025-Basilisk101-Madrid)
+[![Issues](https://img.shields.io/github/issues/comphy-lab/energy-budget-issues)](https://github.com/comphy-lab/energy-budget-issues/issues)
+[![License](https://img.shields.io/github/license/comphy-lab/energy-budget-issues)](https://github.com/comphy-lab/energy-budget-issues/blob/main/LICENSE)
+[![Last Commit](https://img.shields.io/github/last-commit/comphy-lab/energy-budget-issues)](https://github.com/comphy-lab/energy-budget-issues/commits/main)
 [![Basilisk](https://img.shields.io/badge/Basilisk-Compatible-green)](http://basilisk.fr/)
-![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/comphy-lab/Basilisk-101?utm_source=oss&utm_medium=github&utm_campaign=comphy-lab%2FBasilisk-101&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
+[![Research](https://img.shields.io/badge/Research-Multiphase%20Flow-blue)](https://comphy-lab.org)
+![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/comphy-lab/energy-budget-issues?utm_source=oss&utm_medium=github&utm_campaign=comphy-lab%2Fenergy-budget-issues&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
 
-Repository for the Basilisk C course at Universidad Carlos III de Madrid (March 10-13, 2025).
+Repository for investigating energy budget issues in multiphase flow simulations using Basilisk C.
 
-## Course Description
+## Project Description
 
-This intensive course provides a comprehensive introduction to high-fidelity simulations using Basilisk C, a powerful computational framework for fluid dynamics. Participants will learn to implement and solve complex fluid mechanics problems with an emphasis on multiphase flows, interface dynamics, and non-Newtonian rheology.
+This repository focuses on investigating energy budget issues in multiphase flow simulations using Basilisk C. The project examines energy conservation in various fluid dynamics scenarios including drop impact, bubble dynamics, and interface evolution with complex physics such as viscoelasticity and thermal effects.
 
-### What You'll Learn
+### Key Research Areas
 
-- **Think before you compute!** Understanding the physics before implementation
-- **Writing the first code in Basilisk C** Getting comfortable with the framework
-- **Solving conservation equations** Numerical approaches to fluid dynamics
-- **Interface tracking methods** Capturing multiphase phenomena accurately
-- **Non-Newtonian flows** Modeling complex rheological behaviors
+- **Energy Conservation Analysis** Tracking kinetic, surface, and dissipation energy components
+- **Multiphase Flow Dynamics** Drop impact, bubble bursting, and interface evolution
+- **Complex Physics Implementation** Viscoelastic fluids, thermal effects, and non-Newtonian rheology
+- **High-Fidelity Simulations** Using adaptive mesh refinement and conservative schemes
+- **Validation and Benchmarking** Comparison with experimental data and theoretical predictions
 
-### Course Details
+### Prerequisites for Contributors
 
-- **Dates**: March 10-13, 2025
-- **Location**: Universidad Carlos III de Madrid, Spain
-- **Duration**: 4 days, full-time
-- **Prerequisites**:
-  - Basic knowledge of fluid mechanics
-  - Experience with programming (any language, C preferred)
-  - Understanding of partial differential equations
-  - Laptop with ability to compile C code
-
-For complete course schedule and registration information, visit: [Course Website](https://comphy-lab.org/teaching/2025-Basilisk101-Madrid)
+- **Experience with Basilisk C** or similar CFD frameworks
+- **Understanding of fluid mechanics** particularly multiphase flows
+- **Knowledge of energy conservation principles** in continuum mechanics
+- **Programming skills in C** and familiarity with parallel computing
 
 ## Repository Structure
 
 ```
-├-- basilisk/src/: Core Basilisk CFD library (reference only)
+├── basilisk/src/: Core Basilisk CFD library (reference only)
 ├── postProcess/: Project-specific post-processing tools
 ├── src-local/: Custom header files extending Basilisk functionality
-├── testCases/: Test cases with their own Makefile
+├── simulationCases/: Simulation cases with energy budget analysis
 ```
 
 ## Installation
@@ -114,7 +108,7 @@ The script will create a `.project_config` file in your project root with the ne
 
 ### Windows Subsystem for Linux (WSL) Compatibility
 
-Testing on WSL is currently incomplete. In principle, the Linux installation instructions should work for WSL environments. If you encounter any issues while installing or running Basilisk on WSL, please report them by [opening a bug report](https://github.com/comphy-lab/Basilisk-101/issues/new?template=bug_report.md&labels=bug,wsl).
+Testing on WSL is currently incomplete. In principle, the Linux installation instructions should work for WSL environments. If you encounter any issues while installing or running Basilisk on WSL, please report them by [opening a bug report](https://github.com/comphy-lab/energy-budget-issues/issues/new?template=bug_report.md&labels=bug,wsl).
 
 ### Complete Installation Instructions
 
@@ -134,7 +128,7 @@ We use GitHub Issues to track bugs, feature requests, and example requests for t
 ### Issue Templates
 
 #### Bug Report:
-[Report here](https://github.com/comphy-lab/Basilisk-101/issues/new?template=bug_report.md)
+[Report here](https://github.com/comphy-lab/energy-budget-issues/issues/new?template=bug_report.md)
 
 - For problems with installation, compilation, or running code. 
 Please include:
@@ -146,7 +140,7 @@ Please include:
 - Code snippets or files that demonstrate the issue
 
 #### Feature/Topic Request:
-[Report here](https://github.com/comphy-lab/Basilisk-101/issues/new?template=feature_request.md)
+[Report here](https://github.com/comphy-lab/energy-budget-issues/issues/new?template=feature_request.md)
 - For requesting specific topics or functionality
 - Coverage of specific topics in the course
 - New examples or tutorials
@@ -154,20 +148,20 @@ Please include:
 - Improvements to existing materials
 
 #### Example Request:
-[Report here](https://github.com/comphy-lab/Basilisk-101/issues/new?template=example_request.md)
+[Report here](https://github.com/comphy-lab/energy-budget-issues/issues/new?template=example_request.md)
 - For requesting specific examples that demonstrate:
 - Particular Basilisk features
 - Solutions to common problems
 - Implementation of specific physics or numerical methods
 
 #### General Question:
-[Report here](https://github.com/comphy-lab/Basilisk-101/issues/new?template=general_question.md)
+[Report here](https://github.com/comphy-lab/energy-budget-issues/issues/new?template=general_question.md)
 - For any other questions
 
 ### How to Create an Issue
 
-1. Go to the ["Issues" tab](https://github.com/comphy-lab/Basilisk-101/issues) in the GitHub repository
-2. Click the ["New Issue"](https://github.com/comphy-lab/Basilisk-101/issues/new/choose) button
+1. Go to the ["Issues" tab](https://github.com/comphy-lab/energy-budget-issues/issues) in the GitHub repository
+2. Click the ["New Issue"](https://github.com/comphy-lab/energy-budget-issues/issues/new/choose) button
 3. Select the appropriate template from the options
 4. Fill in the required information according to the template
 5. Add relevant labels if available
