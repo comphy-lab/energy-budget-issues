@@ -24,7 +24,7 @@ Dependencies:
 
 External Dependencies:
     - ./getFacet2D: Basilisk executable for interface extraction
-    - ./getData-elastic-scalar2D: Basilisk executable for field data extraction
+    - ./getData: Basilisk executable for field data extraction
 
 Author: Vatsal Sanjay
 Contact: vatsalsanjay@gmail.com
@@ -105,8 +105,8 @@ def gettingFacets(filename, includeCoat='true'):
     try:
         p = sp.Popen(exe, stdout=sp.PIPE, stderr=sp.PIPE)
         stdout, stderr = p.communicate()
-    except FileNotFoundError:
-        raise FileNotFoundError(f"getFacet2D executable not found. Ensure it's compiled and in the current directory.")
+    except FileNotFoundError as e:
+        raise FileNotFoundError("getFacet2D executable not found. Ensure it's compiled and in the current directory.") from e
 
     temp1 = stderr.decode("utf-8")
     temp2 = temp1.split("\n")
@@ -138,7 +138,7 @@ def gettingfield(filename, zmin, zmax, rmax, nr):
     """
     Extract field data from Basilisk simulation snapshots.
 
-    Communicates with the getData-elastic-scalar2D executable to extract
+    Communicates with the getData executable to extract
     flow field variables including strain rate, velocity, and stress tensors
     on a uniform grid for visualization.
 
@@ -159,7 +159,7 @@ def gettingfield(filename, zmin, zmax, rmax, nr):
             - nz (int): Number of grid points in axial direction
 
     Raises:
-        subprocess.CalledProcessError: If the getData-elastic-scalar2D executable fails
+        subprocess.CalledProcessError: If the getData executable fails
         ValueError: If the extracted data dimensions are inconsistent
 
     Note:
@@ -170,8 +170,8 @@ def gettingfield(filename, zmin, zmax, rmax, nr):
     try:
         p = sp.Popen(exe, stdout=sp.PIPE, stderr=sp.PIPE)
         stdout, stderr = p.communicate()
-    except FileNotFoundError:
-        raise FileNotFoundError(f"getData-elastic-scalar2D executable not found. Ensure it's compiled and in the current directory.")
+    except FileNotFoundError as e:
+        raise FileNotFoundError("getData executable not found. Ensure it's compiled and in the current directory.") from e
 
     temp1 = stderr.decode("utf-8")
     temp2 = temp1.split("\n")
@@ -302,7 +302,7 @@ def process_timestep(ti, folder, nGFS, GridsPerR, rmin, rmax, zmin, zmax, lw, si
                       extent=[-rminp, -rmaxp, zminp, zmaxp],
                       vmax=DEFAULT_CONFIG['strain_vmax'], vmin=DEFAULT_CONFIG['strain_vmin'])
 
-    # Create stress trace contour plot (right side)
+    # Create velocity magnitude contour plot (right side)
     cntrl2 = ax.imshow(vel, interpolation='Bilinear', cmap='Blues', origin='lower',
                       extent=[rminp, rmaxp, zminp, zmaxp],
                       vmax=1.0, vmin=0.0)
@@ -325,11 +325,11 @@ def process_timestep(ti, folder, nGFS, GridsPerR, rmin, rmax, zmin, zmax, lw, si
     c1.ax.yaxis.set_label_position('left')
     c1.ax.yaxis.set_major_formatter(StrMethodFormatter('{x:,.1f}'))
 
-    # Right colorbar for stress trace
+    # Right colorbar for velocity magnitude
     cb2 = fig.add_axes([l+w+0.01, b, 0.03, h])
     c2 = plt.colorbar(cntrl2, cax=cb2, orientation='vertical')
     c2.ax.tick_params(labelsize=TickLabel)
-    c2.set_label(r'$\log_{10}\left(\text{tr}\left(\mathcal{A}\right)-1\right)$', fontsize=TickLabel)
+    c2.set_label(r'$|\mathbf{u}|$', fontsize=TickLabel)
     c2.ax.yaxis.set_major_formatter(StrMethodFormatter('{x:,.2f}'))
 
     ax.axis('off')  # Remove axis ticks and labels for cleaner look

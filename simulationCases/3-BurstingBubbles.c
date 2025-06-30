@@ -74,6 +74,12 @@ Key numerical parameters controlling simulation accuracy and stability:
 #include "navier-stokes/conserving.h" // Conservative momentum advection
 #include "tension.h"                  // Surface tension forces
 
+// System headers for safe directory creation
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <errno.h>
+#include <string.h>
+
 #if !_MPI
 #include "distance.h"                 // Distance function utilities (non-MPI version)
 #endif
@@ -134,9 +140,12 @@ int  main(int argc, char const *argv[]) {
   init_grid (1 << 5);                 // Initialize with 32×32 base grid (2^5)
   
   // Create directory for simulation snapshots
-  char comm[80];
-  sprintf (comm, "mkdir -p intermediate");
-  system(comm);
+  struct stat st = {0};
+  if (stat("intermediate", &st) == -1) {
+    if (mkdir("intermediate", 0700) != 0) {
+      fprintf(ferr, "Error creating intermediate directory: %s\n", strerror(errno));
+    }
+  }
   
   // Set restart file name
   sprintf (dumpFile, "restart");

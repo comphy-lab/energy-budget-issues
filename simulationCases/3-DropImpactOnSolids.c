@@ -26,6 +26,12 @@
 #include "navier-stokes/conserving.h"  // Conservative momentum advection
 #include "tension.h"            // Surface tension model
 
+// System headers for safe directory creation
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <errno.h>
+#include <string.h>
+
 // ======= Numerical parameters for adaptivity =======
 // Error tolerances for adaptive mesh refinement
 #define fErr (1e-3)             // Error tolerance in Volume of Fluid (interface position)
@@ -34,9 +40,9 @@
 #define DissErr (1e-5)          // Error tolerances in dissipation rate
 
 // ======= Physical parameters =======
-#define Rho21 (1e-2)            // Density ratio (air/water)
+#define Rho21 (1e-3)            // Density ratio (air/water)
 // Drop positioning parameters
-#define SPdist (0.5)           // Distance parameter for drop placement
+#define SPdist (0.01)           // Distance parameter for drop placement
 #define R2Drop(x,y) (sq(x - 1e0 - SPdist) + sq(y))  // Function to define circular drop shape
 
 // ======= Boundary conditions =======
@@ -63,11 +69,11 @@ char energyFile[80];
 int main(int argc, char const *argv[]) {
 
   // Default parameter values
-  MAXlevel = 8;                 // Maximum grid refinement level
+  MAXlevel = 10;                 // Maximum grid refinement level
   tmax = 5.0;                   // Maximum simulation time
   We = 4.0;                     // Weber number (We = ρU²D/σ)
   Ohd = 5e-2;                   // Ohnesorge number for drop (Oh = μ/√(ρσD))
-  Ohs = 1e-2*Ohd;                   // Ohnesorge number for surrounding fluid
+  Ohs = 1e-5; //1e-4*Ohd;                   // Ohnesorge number for surrounding fluid
   Ldomain = 4.0;                // Domain size (dimensionless)
 
   /**
@@ -96,9 +102,12 @@ int main(int argc, char const *argv[]) {
   init_grid(1 << (4));          // Start with a 16×16 base grid (2^4)
 
   // Create directory for intermediate results
-  char comm[80];
-  sprintf(comm, "mkdir -p intermediate");
-  system(comm);
+  struct stat st = {0};
+  if (stat("intermediate", &st) == -1) {
+    if (mkdir("intermediate", 0700) != 0) {
+      fprintf(ferr, "Error creating intermediate directory: %s\n", strerror(errno));
+    }
+  }
 
   // ======= Set physical properties =======
   // Note: All quantities are in dimensionless form

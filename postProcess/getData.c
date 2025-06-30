@@ -113,11 +113,31 @@ log_scale = log₁₀(value) if value > 0, else -10
 */
 int main(int a, char const *arguments[])
 {
+  // Validate argument count
+  if (a != 7) {
+    fprintf(stderr, "Usage: %s <filename> <xmin> <ymin> <xmax> <ymax> <ny>\n", arguments[0]);
+    return 1;
+  }
+
   // Parse command line arguments
   sprintf (filename, "%s", arguments[1]);
   xmin = atof(arguments[2]); ymin = atof(arguments[3]);
   xmax = atof(arguments[4]); ymax = atof(arguments[5]);
   ny = atoi(arguments[6]);
+
+  // Validate input parameters
+  if (xmin >= xmax) {
+    fprintf(stderr, "Error: xmin must be less than xmax\n");
+    return 1;
+  }
+  if (ymin >= ymax) {
+    fprintf(stderr, "Error: ymin must be less than ymax\n");
+    return 1;
+  }
+  if (ny <= 0) {
+    fprintf(stderr, "Error: ny must be positive\n");
+    return 1;
+  }
 
   // Build output field list
   list = list_add (list, D2c);
@@ -181,6 +201,10 @@ int main(int a, char const *arguments[])
 
   // Allocate memory for extracted field data
   double ** field = (double **) matrix_new (nx, ny+1, len*sizeof(double));
+  if (field == NULL) {
+    fprintf(stderr, "Error: Failed to allocate memory for field matrix\n");
+    return 1;
+  }
 
   /**
   ### Field Interpolation Loop

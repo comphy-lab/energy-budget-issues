@@ -26,7 +26,7 @@ def read_energy_data(filename):
   t = data[:, 1]
   ke = data[:, 2]
   se = data[:, 3]
-  eps = data[:, 4] # dissipation rate -- do not plot!
+  _ = data[:, 4] # dissipation rate -- do not plot!
   Ediss = data[:, 5]
   Etot = data[:, 6]
   
