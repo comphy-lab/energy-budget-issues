@@ -137,6 +137,8 @@ deps/
 **/getData-generic-heatEq
 **/getData-generic-one-phase
 **/getData-LidDriven
+**/3-DropImpactOnSolids-noSlip*
+**/getFacet2D*
 
 # Never exclude these files
 !*.c
