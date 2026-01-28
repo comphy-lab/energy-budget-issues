@@ -121,6 +121,17 @@ To use the make file do:
 CFLAGS=-DDISPLAY=-1 make NAME-of-File.tst
 ```
 
+Quick start (from repo root):
+```bash
+source .project_config
+cd simulationCases
+./runCases.sh 3-DropImpactOnPool
+```
+
+### Post-processing
+
+Post-processing utilities live in `postProcess/` (Python and C), e.g. `plot_energy.py` and `VideoAxi.py`.
+
 ## Reporting Issues and Feature Requests
 
 We use GitHub Issues to track bugs, feature requests, and example requests for this course. When creating an issue, please select the appropriate template to help us address your needs efficiently.

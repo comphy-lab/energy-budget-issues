@@ -72,6 +72,9 @@ obj/
 deps/
 
 # Project specific files
+/basilisk/
+/.project_config
+/CLAUDE.md
 **/_darcs
 **/*.html
 **/intermediate*
