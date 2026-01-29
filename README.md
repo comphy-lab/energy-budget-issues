@@ -31,11 +31,14 @@ This repository focuses on investigating energy budget issues in multiphase flow
 ## Repository Structure
 
 ```
-├── basilisk/src/: Core Basilisk CFD library (reference only)
+├── .github/: Issue templates and docs/CI automation
 ├── postProcess/: Project-specific post-processing tools
-├── src-local/: Custom header files extending Basilisk functionality
 ├── simulationCases/: Simulation cases with energy budget analysis
+├── src-local/: Project-specific Basilisk headers (optional)
 ```
+
+Note: `basilisk/` and `.project_config` are created locally by
+`reset_install_requirements.sh` and are gitignored.
 
 ## Installation
 
